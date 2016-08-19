@@ -33,7 +33,7 @@ class IndexController extends HomeCommonController {
                 $value['progress'] = $progress['completed'];
             }
 		}
-		// dump($data);
+		//dump($data);
 		$this->assign($data);
 		$this->display();
 	}

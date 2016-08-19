@@ -20,7 +20,7 @@ class PracticeController extends HomeCommonController {
 
 		$bankInfo = $QuestionBank->getBankInfo($bankId);
 		if ($number > 0 && $number <= $bankInfo['amount']){
-			$data = $Question->getQuestionInfoByNum($bankId, $number);
+			$data = $Question->getQuestionInfoByNum($bankId, $number,$userId);
 			$data['latest'] = 0;
 		}else{
 			$number = $this->getLatestNum($userId, $bankId);
@@ -29,17 +29,21 @@ class PracticeController extends HomeCommonController {
 			}else{
 				redirect(U('Practice/result', array('bank'=>$bankAlias)));
 			}
-			$data = $Question->getQuestionInfoByNum($bankId, $number);
+			$data = $Question->getQuestionInfoByNum($bankId, $number,$userId);
 			$data['latest'] = 1;
 		}
 		$data['number'] = $number;
 		$record = $Result->getRecordBySearch($userId, $bankId);
 		if ($record != null && sizeof($record) >= $number){
-			$data['answer'] = $record['answer'][$number-1];
-		}
+            $data['answer'] = $record['answer'][$number-1];
+        }
 		$data['bank'] = $bankInfo['name'];
-		$data['bank_alias'] = $bankAlias; 
+		$data['bank_alias'] = $bankAlias;
+        $data['course_id'] = $bankInfo['course_id'];
 		$data['amount'] = $bankInfo['amount'];
+
+        dump($data);
+        exit;
 		$this->assign($data);
 		$this->display();
 	}
@@ -62,7 +66,8 @@ class PracticeController extends HomeCommonController {
 		$this->display();		
 	}
 
-	private function getLatestNum($userId, $bankId){		
+
+	private function getLatestNum($userId, $bankId){
 		$Result = D('Result');
 		$answer = $Result->getRecordBySearch($userId, $bankId);
 		if ($answer == null){
@@ -125,6 +130,38 @@ class PracticeController extends HomeCommonController {
 		$this->ajaxReturn($data);
 	}
 
+    /*
+     * $_POST=array(
+     *      'content'       =>笔记内容,
+     *      'questionId'    =>题目Id,
+     * )
+     *
+     * ajaxReturn的状态码status:
+     *      0:成功
+     *      1：接收到的questionId不是数字
+     *      2:(数据库)提交失败
+     */
+    public function updateNote(){
+        $userId=session('userid');
+        $questionId=I('post.questionId',-1,'/^\d+$/');
+        $content=I('post.content');
+        if ($questionId==-1){
+            $data['status'] = 1;
+            $this->ajaxReturn($data);
+            exit;
+        }
+        $UserQuestion = D('UserQuestion');
+        $result=$UserQuestion->updateNote($userId,$questionId,$content);
+        if(!$result){
+            $data['status'] = 2;
+            $this->ajaxReturn($data);
+            exit;
+        }else{
+            $data['status'] = 0;
+            $this->ajaxReturn($data);
+        }
+    }
+
 	public function clearUserData(){
 		$bankAlias = I('post.bank', '', ALIAS_FORMAT);
 		if ($bankAlias == ''){
@@ -153,6 +190,7 @@ class PracticeController extends HomeCommonController {
 
 	public function loadBank(){
 		$bankAlias = I('post.bank', '', ALIAS_FORMAT);
+        $userId = session('userid');
 		if ($bankAlias == ''){
 			$data['status'] = 1;
 			$this->ajaxReturn($data);
@@ -166,7 +204,7 @@ class PracticeController extends HomeCommonController {
 			exit;
 		}
 		$Question = D('Question');
-		$bankData = $Question->getQuestionList($bankId);
+		$bankData = $Question->getQuestionList($bankId,$userId);
 		if ($bankData == null){
 			$data['status'] = 3;
 			$this->ajaxReturn($data);
