@@ -20,7 +20,7 @@ class UserQuestionModel extends Model{
             $data['note']=$content;
         }else{
             $data = $originalData;
-            $data['content'] = $content;
+            $data['note'] = $content;
         }
         $data['note_update_time'] = date('Y-m-d H:i:s');
         if ($UserQuestion->create($data)){
