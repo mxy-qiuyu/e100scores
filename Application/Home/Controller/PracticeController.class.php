@@ -23,7 +23,7 @@ class PracticeController extends HomeCommonController {
 		// 若请求题号合法，则返回指定题目信息，否则返回用户上一次的答题位置
 		$bankInfo = $QuestionBank->getBankInfo($bankId);
 		if ($number > 0 && $number <= $bankInfo['amount']){
-			$data = $Question->getQuestionInfoByNum($bankId, $number);
+			$data = $Question->getQuestionInfoByNum($bankId, $number,$userId);
 			$data['latest'] = 0;
 		}else{
 			$number = $this->getLatestNum($userId, $bankId);
@@ -32,7 +32,7 @@ class PracticeController extends HomeCommonController {
 			}else{	//若用户已答完，则跳转到结果页
 				redirect(U('Practice/result', array('bank'=>$bankAlias)));
 			}
-			$data = $Question->getQuestionInfoByNum($bankId, $number);
+			$data = $Question->getQuestionInfoByNum($bankId, $number,$userId);
 			$data['latest'] = 1;
 		}
 		$data['number'] = $number;
@@ -47,9 +47,10 @@ class PracticeController extends HomeCommonController {
 			}
 		}
 		$data['bank'] = $bankInfo['name'];
-		$data['bank_alias'] = $bankAlias; 
+		$data['bank_alias'] = $bankAlias;
+        $data['course_id'] = $bankInfo['course_id'];
 		$data['amount'] = $bankInfo['amount'];
-		$this->assign($data);
+        $this->assign($data);
 		$this->display();
 	}
 
@@ -124,6 +125,40 @@ class PracticeController extends HomeCommonController {
 		}
 	}
 
+    /*
+     * ajax接口：将用户笔记更新到数据库
+     * $_POST=array(
+     *      'content'       =>笔记内容,
+     *      'questionId'    =>题目Id,
+     * )
+     *
+     * ajaxReturn的状态码status:
+     *      0:成功
+     *      1：接收到的questionId不是数字
+     *      2:(数据库)提交失败
+     */
+    public function updateUserNote(){
+        $userId = session('userid');
+        $date = date('Y-m-d H:i:s');
+        $questionId = I('post.questionId',-1,'/^\d+$/');
+        $content = I('post.content');
+        if($questionId==-1){
+            $data['status'] = 1;
+            $this->ajaxReturn($data);
+            die;
+        }
+        $UserQuestion = D('UserQuestion');
+        $result = $UserQuestion->updateNoteById($userId,$questionId,$content,$date);
+        if(!$result){
+            $data['status'] = 2;
+            $this->ajaxReturn($data);
+            die;
+        }else{
+            $data['status'] = 0;
+            $this->ajaxReturn($data);
+        }
+    }
+
 	// AJAX接口：获取数据库的用户答题数据
 	public function loadUserData(){
 		$bankAlias = I('post.bank', '', ALIAS_FORMAT);
@@ -186,6 +221,7 @@ class PracticeController extends HomeCommonController {
 	// AJAX接口：获取指定题库的题目信息
 	public function loadBank(){
 		$bankAlias = I('post.bank', '', ALIAS_FORMAT);
+        $userId = session('userid');
 		if ($bankAlias == ''){
 			$data['status'] = 1;	// 参数不合法
 			$this->ajaxReturn($data);
@@ -199,7 +235,7 @@ class PracticeController extends HomeCommonController {
 			exit;
 		}
 		$Question = D('Question');
-		$bankData = $Question->getQuestionList($bankId);
+		$bankData = $Question->getQuestionList($bankId,$userId);
 		if ($bankData == null){
 			$data['status'] = 3;	// 请求失败
 			$this->ajaxReturn($data);
