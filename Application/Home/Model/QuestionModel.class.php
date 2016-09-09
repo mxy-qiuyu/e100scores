@@ -56,7 +56,7 @@ class QuestionModel extends Model
 	* 根据选项信息返回正确答案字符串
 	* @param options：选项格式：array(array('option'=>str,'correct'=>tinyint))
 	*/
-	public function getQuestionKey($options){
+	static public function getQuestionKey($options){
 		$result = '';
 		foreach($options as $i=>$option){
 			if($option['correct'] == 1){
