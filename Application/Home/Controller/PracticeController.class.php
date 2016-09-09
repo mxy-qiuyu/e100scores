@@ -250,4 +250,87 @@ class PracticeController extends HomeCommonController {
 		$data['data'] = $bankData;
 		$this->ajaxReturn($data);		
 	}
+
+
+    /**
+     * 依照题库Id、题目编号和用户ID来在收藏夹中添加题目
+     * $_POST=array(
+     *      bankId      =>题库id，
+     *      num         =>题目编号，
+     * )
+     * 尚需修改
+     */
+    public function addQuestionToFavorite(){
+        $bankId = I('post.bankId',-1,'/^\d+$/');
+        $number = I('post.num',-1,'/^\d+$/');
+        if ($bankId==-1||$number==-1){
+            $this->error("非法访问");
+        }
+        $userId=session('userid');
+        $UserQuestion=D('UserQuestion');
+        $result=$UserQuestion->addQuestionToFavorite($bankId,$number,$userId);
+
+
+        //以下尚需修改
+        switch($result){
+            case 0:
+                $this->success('添加成功');
+                break;
+            case 1:
+                $this->error('数据格式有误');
+                break;
+            case 2:
+                $this->error('题目已被收藏');
+                break;
+            case 3:
+                $this->error('未在题库中找到题目');
+                break;
+        }
+    }
+
+    /**
+     * 依照题库Id、题目编号和用户ID来在移除收藏夹中的题目
+     * $_POST=array(
+     *      bankId      =>题库id，
+     *      num         =>题目编号，
+     * )
+     * 尚需修改
+     */
+    public function removeQuestion(){
+        $bankId = I('post.bankId',-1,'/^\d+$/');
+        $number = I('post.num',-1,'/^\d+$/');
+        if ($bankId==-1||$number==-1){
+            $this->error("非法访问");
+        }
+        $userId=session('userid');
+        $UserQuestion=D('UserQuestion');
+        $result=$UserQuestion->removeQuestionFromFavorite($bankId,$number,$userId);
+
+
+        //以下尚需修改
+        switch($result){
+            case 0:
+                $this->success('移除成功');
+                break;
+            case 1:
+                $this->error('数据格式有误');
+                break;
+            case 2:
+                $this->error('题目原本就没有被收藏');
+                break;
+            case 3:
+                $this->error('未在题库中找到题目');
+                break;
+        }
+    }
+
+	/*public function testForModel(){
+	    $courseId = I('post.courseId',-1,'/^\d+$/');
+        if($courseId==-1){
+            $this->error('非法访问');
+        }
+        $userId = session('userid');
+        $Favorite = D('FavoriteView');
+        dump($Favorite->getQuestionListForFavorite($courseId,$userId));
+    }*/
 }
