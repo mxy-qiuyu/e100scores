@@ -29,7 +29,7 @@ class FavoriteViewModel extends ViewModel {
      * 如果未找到题目返回false
      * 这里有调用Question模型的getQuestionKey方法
      */
-    public function getQuestionListForFavorite($courseId,$userId){
+    public function getQuestionList($courseId,$userId){
         $result = $this
             ->where('
                 user_question.user_id="%s" AND 
@@ -56,7 +56,7 @@ class FavoriteViewModel extends ViewModel {
     * 如果未找到题目返回false
     * 这里有调用Question模型的getQuestionKey方法
     */
-    public function getQuestionByNumForFavorite($courseId,$userId,$number){
+    public function getQuestionByNum($courseId,$userId,$number){
         $result = $this
             ->where('
                 user_question.user_id="%s" AND 
@@ -78,10 +78,11 @@ class FavoriteViewModel extends ViewModel {
         $result[0]['key'] = QuestionModel::getQuestionKey($result[0]['options']);
         return $result[0];
     }
+
     /*
      * 在收藏夹题目变动之后，用于确定总的题目数量的函数，开销比较大
      */
-    public function getQuestionAmountForFavorite($courseId,$userId){
+    public function getQuestionAmount($courseId,$userId){
         $result = $this
             ->where('
                 user_question.user_id="%s" AND 
