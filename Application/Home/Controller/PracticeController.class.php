@@ -255,6 +255,7 @@ class PracticeController extends HomeCommonController {
     /**
      * 依照题库Id、题目编号和用户ID来在收藏夹中添加题目
      * $_POST=array(
+     *      courseId    =>题库表Id,
      *      bankId      =>题库id，
      *      num         =>题目编号，
      * )
@@ -263,12 +264,14 @@ class PracticeController extends HomeCommonController {
     public function addQuestionToFavorite(){
         $bankId = I('post.bankId',-1,'/^\d+$/');
         $number = I('post.num',-1,'/^\d+$/');
-        if ($bankId==-1||$number==-1){
+        $courseId = I('post.courseId',-1,'/^\d+$/');
+        if ($bankId==-1||$number==-1||$courseId==-1){
             $this->error("非法访问");
         }
         $userId=session('userid');
         $UserQuestion=D('UserQuestion');
-        $result=$UserQuestion->addQuestionToFavorite($bankId,$number,$userId);
+        $result=$UserQuestion->addQuestionToFavorite($bankId,$number,$userId,$courseId);
+
 
 
         //以下尚需修改
@@ -285,26 +288,31 @@ class PracticeController extends HomeCommonController {
             case 3:
                 $this->error('未在题库中找到题目');
                 break;
+            case 4:
+                $this->error('收藏夹不存在，尝试创建收藏夹失败');
+                break;
         }
     }
 
     /**
      * 依照题库Id、题目编号和用户ID来在移除收藏夹中的题目
      * $_POST=array(
+     *      courseId    =>题库表Id,
      *      bankId      =>题库id，
      *      num         =>题目编号，
      * )
      * 尚需修改
      */
-    public function removeQuestion(){
+    public function removeQuestionFromFavorite(){
         $bankId = I('post.bankId',-1,'/^\d+$/');
         $number = I('post.num',-1,'/^\d+$/');
-        if ($bankId==-1||$number==-1){
+        $courseId = I('post.courseId',-1,'/^\d+$/');
+        if ($bankId==-1||$number==-1||$courseId==-1){
             $this->error("非法访问");
         }
         $userId=session('userid');
         $UserQuestion=D('UserQuestion');
-        $result=$UserQuestion->removeQuestionFromFavorite($bankId,$number,$userId);
+        $result=$UserQuestion->removeQuestionFromFavorite($bankId,$number,$userId,$courseId);
 
 
         //以下尚需修改
@@ -321,16 +329,17 @@ class PracticeController extends HomeCommonController {
             case 3:
                 $this->error('未在题库中找到题目');
                 break;
+            case 4:
+                $this->error('收藏夹不存在，尝试创建收藏夹失败');
+                break;
         }
     }
 
 	/*public function testForModel(){
-	    $courseId = I('post.courseId',-1,'/^\d+$/');
-        if($courseId==-1){
-            $this->error('非法访问');
-        }
+	    $FavoriteId = I('post.favoriteId');
+        $amount = I('post.amount');
         $userId = session('userid');
-        $Favorite = D('FavoriteView');
-        dump($Favorite->getQuestionListForFavorite($courseId,$userId));
+        $Favorite = D('Favorite');
+        dump($Favorite->setFavoriteQuestionAmount($FavoriteId,$amount));
     }*/
 }
