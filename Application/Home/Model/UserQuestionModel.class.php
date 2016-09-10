@@ -37,9 +37,9 @@ class UserQuestionModel extends Model{
 
     /* 依据题库Id、题目编号和用户Id将题目添加到收藏夹
      *
-     * @return 0:成功；1：数据格式有误；2：题目已被收藏；3：未在题库中找到题目
+     * @return 0:成功；1：数据格式有误；2：题目已被收藏；3：未在题库中找到题目；4：收藏夹不存在，尝试创建收藏夹失败
      */
-    public function addQuestionToFavorite($bankId,$num,$userId){
+    public function addQuestionToFavorite($bankId,$num,$userId,$courseId){
         $UserQuestion = M('user_question');
         $Question = M('question');
         $questionId = $Question->where('bank_id="%d" AND number="%d"',$bankId,$num)->getfield('id');
@@ -64,17 +64,33 @@ class UserQuestionModel extends Model{
             }else{
                 $UserQuestion->save();
             }
+
+            //这部分代码是题目成功加入收藏夹后执行的，对收藏夹耦合字段amount进行处理
+            $Favorite = D('Favorite');
+            $FavoriteView = D('FavoriteView');
+            $amount = $FavoriteView->getQuestionAmount($courseId,$userId);
+            $FavoriteId = $Favorite->getFavoriteIdByCourseId($courseId,$userId);
+            if(!$FavoriteId){//收藏夹不存在
+                $status = $Favorite->createFavoriteByCourseId($courseId,$userId,$amount);
+                if($status==2||$status==3) return 4;
+            }else{
+                $setResult = $Favorite->setFavoriteQuestionAmount($FavoriteId,$amount);
+                if($setResult!=0)return 4;
+            }
+
             return 0;
         }else{
             return 1;
         }
+
+
     }
 
     /* 依据题库Id、题目编号和用户Id将题目添加到收藏夹
      *
-     * @return 0:成功；1：数据格式有误；2：题目原本就没有被收藏；3：未在题库中找到题目
+     * @return 0:成功；1：数据格式有误；2：题目原本就没有被收藏；3：未在题库中找到题目；4：收藏夹不存在，尝试创建收藏夹失败
      */
-    public function removeQuestionFromFavorite($bankId,$num,$userId){
+    public function removeQuestionFromFavorite($bankId,$num,$userId,$courseId){
         $UserQuestion = M('user_question');
         $Question = M('question');
         $questionId = $Question->where('bank_id="%d" AND number="%d"',$bankId,$num)->getfield('id');
@@ -99,6 +115,20 @@ class UserQuestionModel extends Model{
             }else{
                 $UserQuestion->save();
             }
+
+            //这部分代码是题目成功加入收藏夹后执行的，对收藏夹耦合字段amount进行处理
+            $Favorite = D('Favorite');
+            $FavoriteView = D('FavoriteView');
+            $amount = $FavoriteView->getQuestionAmount($courseId,$userId);
+            $FavoriteId = $Favorite->getFavoriteIdByCourseId($courseId,$userId);
+            if(!$FavoriteId){//收藏夹不存在
+                $status = $Favorite->createFavoriteByCourseId($courseId,$userId,$amount);
+                if($status==2||$status==3) return 4;
+            }else{
+                $setResult = $Favorite->setFavoriteQuestionAmount($FavoriteId,$amount);
+                if($setResult!=0) return 5;
+            }
+
             return 0;
         }else{
             return 1;
