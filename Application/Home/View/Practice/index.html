@@ -7,8 +7,10 @@
 	<script type="text/javascript">
 	var bank = '{$bank_alias}';
 	var number = {$number};
-	var latest = {$latest};
+	var latest = {$latest};		//是否是接上次进度做题
 	var total = {$amount};
+	var remoteTime = '{$update_time}';		//远程数据记录的时间
+	var hasDone = {$done|default=0};	//该题是否已做
 	var bankStorage = new BankStorage(bank);
 	var userStorage = new UserStorage(bank);
 	var resultUrl = "{:U('Practice/result', array('bank'=>$bank_alias))}";
@@ -20,35 +22,41 @@
 			});
 		}
 	});
+	if (userStorage.isExist()){
+		userStorage.updateVer();	//更新本地数据结构版本
+	}
+
 	$(function(){
-		if (userStorage.isExist()){
-			var userData = userStorage.getAll();
-			if (latest == 1){
-				if (userData.length < total && number != userData.length+1){
+		switch (userStorage.theLatest(remoteTime)){
+			case 'local':
+				var userData = userStorage.getAll();
+				if (latest == 1){	//接着上一次的进度做题
+					if (userData.length < total && number != userData.length+1){	//未做完且上次不是做到该题
+						number = userData.length+1;
+						loadQuestion(number);
+					}else if (userData.length == total && number != total){	//已做完
+						location.href = "{:U('Practice/result', array('bank'=>$bank_alias))}";
+					}
+				}else if (number > userData.length+1){	//访问的题目是还没有做到的
+					alert('对不起，不可以跳题哦');
 					number = userData.length+1;
 					loadQuestion(number);
-				}else if (userData.length == total && number != total){
-					location.href = "{:U('Practice/result', array('bank'=>$bank_alias))}";
 				}else{
-					loadUserData(number);
+					loadUserData(number);				
 				}
-			}else if (number > userData.length+1){
-				alert('对不起，不可以跳题哦');
-				number = userData.length+1;
-				loadQuestion(number);
-			}else{
-				loadUserData(number);				
-			}
-		}else{
-			$('.options button').each(function(){
-				if ($(this).data('checked') == 1){
+				userStorage.upload();
+				break;
+			case 'remote':
+				if (hasDone == 1){
 					showCorrection();
-					return false;
 				}
-			})
-			userStorage.download();
+				userStorage.download();
+				break;
+			default:
+				if (hasDone == 1){
+					showCorrection();
+				}
 		}
-
 	});
 	</script>
 </block>

@@ -54,15 +54,24 @@
 			location.href = url;
 		});
 		$('.bank-progress').each(function(){
-			var bank = $(this).parents('.bank-item').attr('id');
-			var userStorage = new UserStorage(bank);
+			var $bank = $(this).parents('.bank-item');
+			var userStorage = new UserStorage($bank.attr('id'));
 			var $complete = $(this).find('.complete');
+			var remoteTime = $bank.data('time');
 			if (userStorage.isExist()){
-				var userData = userStorage.getAll();
-				var progress = userData.length;
-				$complete.html(progress);
-				userStorage.upload();
-			}else if ($complete.html() != 0){
+				userStorage.updateVer();	//检查并更新本地数据结构版本
+				switch (userStorage.theLatest(remoteTime)){
+					case 'local':
+						var userData = userStorage.getAll();
+						var progress = userData.length;
+						$complete.html(progress);
+						userStorage.upload();
+						break;
+					case 'remote':
+						userStorage.download();
+						break;
+				}
+			}else if (remoteTime != ''){
 				userStorage.download();
 			}
 		})
@@ -76,7 +85,7 @@
 			<li class="item-case-bg"><span class="center-block">还没有相关题库哦~</span></li>
 		</empty>
 		<foreach name="list" item="vo">
-			<li id="{$vo['alias']}" class="bank-item item-case-bg">
+			<li id="{$vo['alias']}" class="bank-item item-case-bg" data-time="{$vo['update_time']}">
 				<div class="bank-number">{$key + 1}</div>
 				<div class="bank-name">{$vo['name']}</div>
 				<div class="bank-progress flex-end">

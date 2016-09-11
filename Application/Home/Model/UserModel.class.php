@@ -13,6 +13,7 @@ class UserModel extends Model{
 		}
 	}
 
+	// 添加新用户
 	public function addUser($openId){
 		$User = M('User');
 		$data['id'] = $openId;

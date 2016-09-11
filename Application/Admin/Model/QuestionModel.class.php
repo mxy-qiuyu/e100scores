@@ -73,6 +73,7 @@ class QuestionModel extends Model
 		return $result;
 	}
 
+	// 删除指定题库下的所有题目
 	public function deleteQuestionsByBank($bank_id){
 		$Question = M('Question');
 		if (!is_numeric($bank_id)){
@@ -81,6 +82,7 @@ class QuestionModel extends Model
 		$result = $Question->where('bank_id = %d', $bank_id)->delete();
 		return $result;
 	}
+
 	/**
 	* 根据选项信息返回正确答案字符串
 	* @param options：选项格式：array(array('option'=>str,'correct'=>tinyint))
@@ -110,6 +112,7 @@ class QuestionModel extends Model
 		return $total;
 	}
 
+	// 检查指定题库的所有题号是否序列化（题号是否为1~n）
 	public function isConsecutive($bankId){
 		$Question = M('Question');
 		$total = $Question->where('bank_id = "%s"', $bankId)->count();

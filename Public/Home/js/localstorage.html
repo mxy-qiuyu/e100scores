@@ -38,44 +38,118 @@ function UserStorage(alias){
 		var userData = LocalStorage.isExist(name);
 		return userData;
 	}
-	function getStorage(){
+	function getVer(){
 		var userData = LocalStorage.get(name);
-		return userData;
+		var version = userData.version;
+		if (typeof(version) == 'undefined'){
+			return '1.0';
+		}else{
+			return version;
+		}
 	}
-	function setStorage(obj){
-		LocalStorage.set(name, obj);
+	/*数据结构版本更新（自己挖的坑，跪着也要填完）*/
+	function updateVer(){
+		var version = getVer();
+		switch (getVer()){
+			case '2.0':
+				return;
+			case '1.0':
+				var userData = LocalStorage.get(name);
+				var record = new Array();
+				for (var i=0; i<userData.length; i++){
+					record[i] = {checked: userData[i]};
+				}
+				var thisTime = new Date();
+				var newData = {
+					version: '2.0',
+					record: record,
+					updateTime: thisTime.Format(Config.TIME_FORMAT)
+				};
+				LocalStorage.set(name, newData);
+				break;
+		}
 	}
+	/**
+	* 比较本地记录时间与cmpTime，判断哪个是最新的数据
+	* @param cmpTime："yyyy-MM-dd hh:mm:ss"格式的字符串
+	*/
+	function theLatest(cmpTime){
+		var userData = LocalStorage.get(name);
+		if (!userData){
+			var updateTime = '';
+		}else{
+			var updateTime = userData.updateTime;
+		}
+		var diff = timeDiff(updateTime, cmpTime);
+		if (diff > 0){
+			return 'remote';
+		}else if (diff < 0){
+			return 'local';
+		}else{
+			return 'equal';
+		}
+	}
+	/*获取本地所有答题记录*/
+	function getAllRecord(){
+		var userData = LocalStorage.get(name);
+		if (!userData){
+			return false;
+		}else{
+			return userData.record;			
+		}
+	}
+	/*根据答题对象数组更新本地用户数据*/
+	function setAllRecord(obj){
+		var userData = LocalStorage.get(name);
+		if (!userData){
+			userData = {version: '2.0'};
+		}
+		userData.record = obj;
+		userData.updateTime = (new Date()).Format(Config.TIME_FORMAT);
+		LocalStorage.set(name, userData);
+	}
+	/*根据题号返回该题的用户答题记录*/
 	function getSingleRecord(number){
-		var userData = getStorage();
+		var userData = LocalStorage.get(name);
 		if (!userData){
 			return false;
 		}
-		if (userData.length >= number){
-			return userData[number-1];
+		if (userData.record.length >= number){
+			return userData.record[number-1].checked;
 		}else{
 			return false;
 		}
 	}
+	/**
+	* 根据题号、选项勾选数组记录用户答题数据 
+	*/
 	function setSingleRecord(number, obj){
-		var userData = getStorage();
+		var userData = LocalStorage.get(name);
 		if (!userData){
-			userData = new Array();
-		}
-		if (userData.length >= number - 1){
-			userData[number-1] = obj;
-			setStorage(userData);
-			return true;
+			userRecord = new Array();
 		}else{
-			return false;
+			userRecord = userData.record;
 		}
+		if (userRecord.length < number-1){
+ 			return false;
+		}else if(userRecord.length == number-1){
+			userRecord[number-1] = new Object();
+ 		}
+		userRecord[number-1].checked = obj;
+		setAllRecord(userRecord);
+		return true;
 	}
 	function uploadCloud(fun){
-		var data = storage.getItem(name);		//因为不需要将字符串数据转对象，所以使用原有的localstorage方法
+		var userData = LocalStorage.get(name);
+		var data = JSON.stringify(userData.record);
+		console.log(data);
 		$.post('{:U("Practice/updateUserData")}', 
 			{
 				bank: alias,
-				data: data
+				data: data,
+				time: userData.updateTime
 			},function(data){
+				console.log(data);
 				if (typeof(fun) == "function"){
 					fun(data);				
 				}
@@ -83,10 +157,11 @@ function UserStorage(alias){
 	}
 	function downloadData(fun){
 		$.post('{:U("Practice/loadUserData")}', {bank: alias}, function(result){
-			if (result.status == 0){
-				LocalStorage.set(name, result.data);
-			}
 			console.log(result);
+			if (result.status == 0){
+				setAllRecord(result.data);
+				setUpdateTime(result.time);
+			}
 			if (typeof(fun) == "function"){
 				fun(result.status);				
 			}
@@ -101,10 +176,18 @@ function UserStorage(alias){
 			}
 		});
 	}
+	function setUpdateTime(time){
+		var userData = LocalStorage.get(name);
+		userData.updateTime = time;
+		LocalStorage.set(name, userData);
+	}
 
 	this.isExist = isExist;
-	this.getAll = getStorage;
-	this.setAll = setStorage;
+	this.getVer = getVer;
+	this.updateVer = updateVer;
+	this.theLatest = theLatest;
+	this.getAll = getAllRecord;
+	this.setAll = setAllRecord;
 	this.get = getSingleRecord;
 	this.set = setSingleRecord;
 	this.upload = uploadCloud;

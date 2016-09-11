@@ -2,7 +2,7 @@
 namespace Home\Model;
 use Think\Model;
 class QuestionBankModel extends Model{
-	//返回指定科目的题库列表，为空时返回null
+	//返回指定科目已发布的题库列表，为空时返回null
 	public function getBankList($course){
 		$QuestionBank = M('QuestionBank');
 		$QuestionBank->field('bank.*, course.name as course, course.alias as course_alias')->table('question_bank bank, course');

@@ -31,7 +31,9 @@ class ResultModel extends Model{
 			$data['id'] = $record['id'];
 		}
 		$data['answer'] = serialize($data['answer']);
-		$data['update_time'] = date("Y-m-d H:i:s");
+		if (!isset($data['update_time'])){
+			$data['update_time'] = date("Y-m-d H:i:s");			
+		}
 		if ($Result->create($data)){
 			if ($record == null){
 				$Result->add();
@@ -44,6 +46,7 @@ class ResultModel extends Model{
 		}
 	}
 
+	// 删除用户指定题库的答题记录
 	public function deleteRecord($userId, $bankId){
 		$Result = M('Result');
 		$result = $Result->where("user_id='%s' AND bank_id='%d'", $userId, $bankId)->delete();

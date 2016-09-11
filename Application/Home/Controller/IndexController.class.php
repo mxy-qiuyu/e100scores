@@ -2,6 +2,7 @@
 namespace Home\Controller;
 use Think\Controller;
 class IndexController extends HomeCommonController {
+	// 首页：科目导航
 	public function index(){
 		$Course = D('Course');
 		$data['course'] = $Course->getCourseList();
@@ -9,7 +10,9 @@ class IndexController extends HomeCommonController {
 		$this->display();
 	}
 
+	// 题库列表页
 	public function bankList(){
+		// 检查数据合法性
 		$course = I('get.course', '', ALIAS_FORMAT);
 		if ($course == ''){
 			$this->error('非法访问');
@@ -19,6 +22,8 @@ class IndexController extends HomeCommonController {
 		if ($courseId == null){
 			$this->error('找不到指定科目');
 		}
+
+		// 获取页面渲染信息
 		$courseInfo = $Course->getCourseInfo($courseId);
 		$data['course'] = $courseInfo['name'];
 		$QuestionBank = D('QuestionBank');
@@ -31,9 +36,9 @@ class IndexController extends HomeCommonController {
             	$value['progress'] = 0;
             }else{
                 $value['progress'] = $progress['completed'];
+                $value['update_time'] = $progress['update_time'];
             }
 		}
-		// dump($data);
 		$this->assign($data);
 		$this->display();
 	}

@@ -8,6 +8,7 @@
 	var radialObj;
 	var bank = '{$bank_alias}';
 	var total = {$amount};
+	var remoteTime = '{$update_time}';		//远程数据记录的时间
 	var bankStorage = new BankStorage(bank);
 	var userStorage = new UserStorage(bank);
 	var percentage = 0;
@@ -15,21 +16,29 @@
 	var bankDataReady = false;
 
 	if (userStorage.isExist()){
-		userStorage.upload();
-		var length = userStorage.getAll().length;
-		if (length < total){
-			location.href = "{:U('Practice/index', array('bank'=>$bank_alias))}/num/" + (length+1);
-		}
-		userDataReady = true;
-	}else{
-		userStorage.download(function(){
-			userDataReady = true;
-			if (bankDataReady){
-				showResult();
-			}
-		});
+		userStorage.updateVer();	//更新本地数据结构版本
 	}
-
+	switch (userStorage.theLatest(remoteTime)){
+		case 'local':
+			var length = userStorage.getAll().length;
+			if (length < total){	//没做完则跳回做题页
+				location.href = "{:U('Practice/index', array('bank'=>$bank_alias))}/num/" + (length+1);
+			}
+			userDataReady = true;
+			userStorage.upload();
+			break;
+		case 'remote':
+			userStorage.download(function(){
+				userDataReady = true;
+				if (bankDataReady){
+					showResult();
+				}
+			});
+			break;
+		default:
+			userDataReady = true;			
+	}
+	
 	var diameter = $(window).height()*0.33;
 	$('.chart').css({'width': (diameter+10), 'height': (diameter+10)});
 	$(function(){

@@ -36,7 +36,7 @@ class QuestionBankModel extends Model{
 
 	/**
 	 * 向数据表保存一条记录
-	 * @param data: 待保存的记录数组，键值包括: id(可选),course_id,name,alias,publish,amount(可选)
+	 * @param data: 待保存的记录数组，键值包括: id(可选),course_id,name,alias,publish
 	 * @param action: 操作类型，取值可为：add,update
 	 */
 	public function saveRecord($data, $action){
